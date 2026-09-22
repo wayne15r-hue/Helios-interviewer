@@ -1,0 +1,25 @@
+name: Helios checks
+on:
+  push:
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  validate:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+      - run: uv sync --frozen --python 3.11 --extra dev
+      - run: npm ci --no-audit --no-fund
+      - run: npm run build
+      - run: uv run --no-sync python -m pytest -q --basetemp=.cache/pytest-ci
+        env:
+          HELIOS_DATA_DIR: .cache/ci-data
+          MPLCONFIGDIR: .cache/matplotlib
